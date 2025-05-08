@@ -20,6 +20,12 @@ function HomePageAdmin() {
         Cerrar Sesión
       </button>
       <div className="button-container">
+        <button className="btn" onClick={() => navigate('/consultar-rutinas')}>
+          Consultar Rutinas de Entrenamiento
+        </button>
+        <button className="btn" onClick={() => navigate('/crear-rutinas')}>
+          Crear Rutinas de Entrenamiento
+        </button>
         <button className="btn" onClick={() => navigate('/consultar-registros')}>
           Consultar Registros
         </button>

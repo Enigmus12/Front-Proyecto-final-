@@ -51,6 +51,35 @@ export interface PhysicalRecordDTO {
   physicalGoal: string;
 }
 
+// Interface para ejercicios
+export interface ExerciseDTO {
+  name: string;
+  description: string;
+  sets: number;
+  repetitions: number;
+  instructions: string;
+}
+
+// Interface para rutinas
+export interface Routine {
+  id: string;
+  name: string;
+  objective: string;
+  description: string;
+  exercises: ExerciseDTO[];
+  duration: string;
+  frequency: string;
+}
+
+export interface RoutineDTO {
+  name: string;
+  objective: string;
+  description: string;
+  exercises: ExerciseDTO[];
+  duration: string;
+  frequency: string;
+}
+
 //servicio para el seguimiento del usuario (tracking)
 export const userTrackingService = {
 
@@ -80,6 +109,20 @@ export const userTrackingService = {
 
 };
 
+// Servicios para rutinas
+export const routineService = {
+  // Obtener todas las rutinas
+  getAllRoutines: async (): Promise<Routine[]> => {
+    const response = await api.get('/routine-service/routines');
+    return response.data as Routine[];
+  },
+
+  // Crear una nueva rutina
+  createRoutine: async (routineDTO: RoutineDTO): Promise<Routine> => {
+    const response = await api.post('/routine-service/create', routineDTO);
+    return response.data as Routine;
+  }
+};
 
 // Servicios para autenticación y usuarios
 export const authService = {
