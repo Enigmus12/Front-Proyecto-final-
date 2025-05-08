@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import HomePage from './pagesUsers/HomePage';
 import UserProfileForm from './pagesUsers/UserProfileForm';
 import GraphsPage from './pagesUsers/GraphsPage';
+import MyRecords from './pagesUsers/MyRecords';
+import GetRecords from './pagesCoaches/GetRecords';
 import Login from './Manito/Login';
 import './styles/Global.css';
 import HomePageAdmin from './pagesCoaches/HomePageAdmin'
@@ -53,6 +55,11 @@ const App: React.FC = () => {
             <GraphsPage />
           </ProtectedRoute>
         } />
+        <Route path="/VerRegistros" element={
+          <ProtectedRoute>
+            <MyRecords />
+          </ProtectedRoute>
+        } />
 
         {/* Rutas protegidas para el entrenador*/}
         <Route path="/admin" element={
@@ -60,7 +67,11 @@ const App: React.FC = () => {
             <HomePageAdmin />
           </ProtectedRoute>
         } />
-        
+        <Route path="/consultar-registros" element={
+          <ProtectedRoute>
+            <GetRecords/>
+          </ProtectedRoute>
+        } />
         
         {/* Ruta para cualquier otra URL no definida */}
         <Route path="*" element={<Navigate to="/login" />} />
