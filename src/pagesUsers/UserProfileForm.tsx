@@ -8,7 +8,6 @@ const UserProfileForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    username: '',
     weight: '',
     bodyMeasurements: {
       chest: '',
@@ -21,10 +20,10 @@ const UserProfileForm: React.FC = () => {
   });
 
   useEffect(() => {
-    const storedUsername = localStorage.getItem('username') || 'Usuario';
+    const storedUserId = localStorage.getItem('userId') || 'Usuario';
     setFormData(prev => ({
       ...prev,
-      username: storedUsername
+      username: storedUserId
     }));
   }, []);
 
@@ -65,7 +64,6 @@ const UserProfileForm: React.FC = () => {
       
       // Crear el objeto DTO para enviar al backend
       const physicalRecordDTO = {
-        userName: formData.username,
         weight: parseFloat(formData.weight),
         bodyMeasurements,
         physicalGoal: formData.personalGoals,
@@ -73,8 +71,8 @@ const UserProfileForm: React.FC = () => {
 
       console.log('Enviando datos al servidor:', physicalRecordDTO);
 
-      // Usar el servicio API en lugar de fetch directo
-      const savedRecord = await userTrackingService.createPhysicalRecord(physicalRecordDTO);
+      // Usar el servicio API con el nuevo método auto que utiliza el token
+      const savedRecord = await userTrackingService.createAutoPhysicalRecord(physicalRecordDTO);
       
       console.log('Registro guardado exitosamente:', savedRecord);
       
@@ -93,14 +91,25 @@ const UserProfileForm: React.FC = () => {
     navigate('/');
   };
 
+  const handleViewStats = () => {
+    navigate('/VerRegistros');
+  };
+
   return (
     <div className="user-form-container">
       <div className="user-form-card">
         <h2>Perfil de Usuario</h2>
         <p className="form-subtitle">Complete la información para personalizar su experiencia</p>
-        <button className="btn-logmenu" onClick={handleLogoutmenu}>
-          Volver al menu
-        </button>
+        
+        <div className="header-buttons">
+          <button className="btn-logmenu" onClick={handleLogoutmenu}>
+            Volver al menu
+          </button>
+          
+          <button className="btn-view-stats" onClick={handleViewStats}>
+            Ver Mis Registros
+          </button>
+        </div>
 
         {error && (
           <div className="error-message">
@@ -109,18 +118,6 @@ const UserProfileForm: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit}>
-          {/* Nombre de usuario (no editable) */}
-          <div className="form-group">
-            <label htmlFor="username">Nombre de Usuario</label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              value={formData.username}
-              readOnly
-              className="readonly-input"
-            />
-          </div>
 
           {/* Peso */}
           <div className="form-group">
@@ -236,7 +233,7 @@ const UserProfileForm: React.FC = () => {
               className="btn btn-primary submit-btn" 
               disabled={loading}
             >
-              {loading ? 'Guardando...' : 'Continuar'}
+              {loading ? 'Guardando...' : 'Guardar y Continuar'}
             </button>
           </div>
         </form>

@@ -1,37 +1,62 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authService } from '../service/api';
 import '../styles/Login.css';
 import iconEscuelaIng from '../assets/icons/iconEscuelaIng.png';
 
+/**
+ * Login component for user authentication.
+ * Allows users to log in using their user ID and password.
+ * @returns {JSX.Element} Login component.
+ */
+interface LoginResponse {
+  authenticated: boolean;
+  token: string;
+  user: {
+    userId: string;
+  };
+  message?: string;
+}
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const [role, setRole] = useState('estudiante');
-  const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!userId || !password) {
+      setError('Por favor ingrese todos los campos');
+      return;
+    }
     
     try {
       setLoading(true);
       setError('');
       
-      setTimeout(() => {
+      const response = await authService.login({ userId, password }) as LoginResponse;
+    
+      if (response.authenticated) {
+        localStorage.setItem('authToken', response.token);
         localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('userRole', role);
-
-        if (role === 'entrenador') {
+        localStorage.setItem('userId', response.user.userId);
+        
+        // Redirección basada en el usuario
+        if (response.user.userId === 'Coach') {
           navigate('/admin');
         } else {
           navigate('/');
         }
-        
-        setLoading(false);
-      }, 800); 
-      
+      } else {
+        setError(response.message || 'Credenciales inválidas');
+      }
     } catch (err: any) {
-      setError('Error al iniciar sesión');
+      setError(err.response?.data?.message || 'Error al iniciar sesión');
+    } finally {
       setLoading(false);
     }
   };
@@ -46,23 +71,37 @@ const Login: React.FC = () => {
         
         <form onSubmit={handleLogin}>
           <div className="form-group">
-            <label htmlFor="role">Seleccione su Rol</label>
-            <select
-              id="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
+            <label htmlFor="userId">ID de Usuario</label>
+            <input
+              type="text"
+              id="userId"
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+              placeholder="Ingrese su ID de usuario"
               disabled={loading}
-              className="role-select"
-            >
-              <option value="estudiante">Estudiante</option>
-              <option value="entrenador">Entrenador</option>
-            </select>
+            />
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="password">Contraseña</label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Ingrese su contraseña"
+              disabled={loading}
+            />
           </div>
           
           <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Cargando...' : 'Continuar'}
+            {loading ? 'Cargando...' : 'Iniciar Sesión'}
           </button>
         </form>
+        
+        <p className="auth-link">
+          ¿No tienes cuenta? <span onClick={() => navigate('/register')}>Regístrate</span>
+        </p>
       </div>
     </div>
   );

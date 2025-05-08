@@ -19,10 +19,13 @@ function HomePage() {
       </button>
       <div className="button-container">
         <button className="btn" onClick={() => navigate('/Formulario')}>
-          Formulario
+          Formularios
         </button>
         <button className="btn" onClick={() => navigate('/Estadisticas')}>
           Estadisticas
+        </button>
+        <button className="btn" onClick={() => navigate('/VerRegistros')}>
+          Ver Mis Registros
         </button>
       </div>
       <img src={iconEscuelaIng} alt="Icono Escuela Ing" className="img-decorativa" />
