@@ -5,6 +5,8 @@ import UserProfileForm from './pagesUsers/UserProfileForm';
 import GraphsPage from './pagesUsers/GraphsPage';
 import MyRecords from './pagesUsers/MyRecords';
 import GetRecords from './pagesCoaches/GetRecords';
+import RoutineList from './pagesCoaches/RoutinesPage';
+import CreateRoutine from './pagesCoaches/CreateRoutine';
 import Login from './Manito/Login';
 import './styles/Global.css';
 import HomePageAdmin from './pagesCoaches/HomePageAdmin'
@@ -72,7 +74,17 @@ const App: React.FC = () => {
             <GetRecords/>
           </ProtectedRoute>
         } />
-        
+        <Route path="/consultar-rutinas" element={
+          <ProtectedRoute>
+            <RoutineList/>
+          </ProtectedRoute>
+        } />
+        <Route path="/crear-rutinas" element={
+          <ProtectedRoute>
+            <CreateRoutine/>
+          </ProtectedRoute>
+        } />
+
         {/* Ruta para cualquier otra URL no definida */}
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
