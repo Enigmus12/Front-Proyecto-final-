@@ -107,6 +107,12 @@ export const userTrackingService = {
     return response.data as PhysicalRecord[];
   },
 
+    // Nuevo método para actualizar un registro físico
+  updatePhysicalRecord: async (id: string, updateData: { observations: string, activeRoutine: string }) => {
+    const response = await api.put(`/tracking-service/records/${id}`, updateData);
+    return response.data;
+  }
+
 };
 
 // Servicios para rutinas
@@ -121,7 +127,14 @@ export const routineService = {
   createRoutine: async (routineDTO: RoutineDTO): Promise<Routine> => {
     const response = await api.post('/routine-service/create', routineDTO);
     return response.data as Routine;
+  },
+
+  // obtener una rutina por su ID
+  getRoutineById: async (routineId: string): Promise<Routine> => {
+    const response = await api.get(`/routine-service/routine/${routineId}`);
+    return response.data as Routine;
   }
+
 };
 
 // Servicios para autenticación y usuarios

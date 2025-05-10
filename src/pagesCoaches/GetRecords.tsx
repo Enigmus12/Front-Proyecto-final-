@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { userTrackingService, PhysicalRecord } from '../service/api';
+import { userTrackingService, PhysicalRecord, routineService, Routine } from '../service/api';
 import '../styles/MyRecords.css'; 
 
 const GetRecords: React.FC = () => {
@@ -8,22 +8,33 @@ const GetRecords: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [records, setRecords] = useState<PhysicalRecord[]>([]);
+  const [editingRecord, setEditingRecord] = useState<PhysicalRecord | null>(null);
+  const [observations, setObservations] = useState<string>('');
+  const [activeRoutine, setActiveRoutine] = useState<string>('');
+  const [routines, setRoutines] = useState<Routine[]>([]);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [updateMessage, setUpdateMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
   useEffect(() => {
-    const fetchUserRecords = async () => {
+    const fetchData = async () => {
       try {
-        // Obtener los registros físicos (sin necesidad de userId)
-        const userRecords = await userTrackingService.getALLrecords();
+        // Cargar registros y rutinas disponibles
+        const [userRecords, availableRoutines] = await Promise.all([
+          userTrackingService.getALLrecords(),
+          routineService.getAllRoutines()
+        ]);
+        
         setRecords(userRecords);
+        setRoutines(availableRoutines);
       } catch (err: any) {
-        console.error('Error al obtener los registros:', err);
-        setError(err.message || 'Error al cargar los registros');
+        console.error('Error al obtener los datos:', err);
+        setError(err.message || 'Error al cargar la información');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUserRecords();
+    fetchData();
   }, []);
 
   const handleBackToMenu = () => {
@@ -39,6 +50,53 @@ const GetRecords: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const handleEditRecord = (record: PhysicalRecord) => {
+    setEditingRecord(record);
+    setObservations(record.observations || '');
+    setActiveRoutine(record.activeRoutine || '');
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingRecord(null);
+    setUpdateMessage(null);
+  };
+
+  const handleSaveChanges = async () => {
+    if (!editingRecord) return;
+
+    try {
+      // Preparar los datos para enviar al backend (solo los campos que se pueden modificar)
+      const updateData = {
+        observations: observations,
+        activeRoutine: activeRoutine
+      };
+
+      // Llamar al endpoint de actualización
+      await userTrackingService.updatePhysicalRecord(editingRecord.id, updateData);
+      
+      // Actualizar el registro en el estado local
+      const updatedRecords = records.map(rec => 
+        rec.id === editingRecord.id ? 
+        { ...rec, observations: observations, activeRoutine: activeRoutine } : 
+        rec
+      );
+      
+      setRecords(updatedRecords);
+      setUpdateMessage({ type: 'success', text: 'Registro actualizado correctamente' });
+      
+      // Cerrar el modal después de 2 segundos
+      setTimeout(() => {
+        handleCloseEditModal();
+      }, 2000);
+      
+    } catch (err: any) {
+      console.error('Error al actualizar el registro:', err);
+      setUpdateMessage({ type: 'error', text: 'Error al actualizar el registro' });
+    }
   };
 
   if (loading) {
@@ -84,10 +142,15 @@ const GetRecords: React.FC = () => {
               <div key={record.id || index} className="record-item">
                 <div className="record-header">
                   <h3>Registro del {formatDate(record.registrationDate)}</h3>
+                  <button 
+                    className="btn-edit-record"
+                    onClick={() => handleEditRecord(record)}
+                  >
+                    Modificar Registro
+                  </button>
                 </div>
                 
                 <div className="record-details">
-
                   <div className="detail-item">
                     <span className="detail-label">Id Registro:</span>
                     <span className="detail-value">{record.id}</span>
@@ -138,20 +201,71 @@ const GetRecords: React.FC = () => {
 
                   <div className="detail-item">
                     <span className="detail-label">Observaciones del entrenador:</span>
-                    <span className="detail-value">{record.observations}</span>
+                    <span className="detail-value">{record.observations || 'Sin observaciones'}</span>
                   </div>
                   
                   <div className="detail-item">
                     <span className="detail-label">Rutina activa:</span>
-                    <span className="detail-value">{record.activeRoutine}</span>
+                    <span className="detail-value">{record.activeRoutine || 'Sin rutina asignada'}</span>
                   </div>
-
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Modal para editar el registro */}
+      {isEditModalOpen && editingRecord && (
+        <div className="edit-modal-overlay">
+          <div className="edit-modal">
+            <h3>Modificar Registro</h3>
+            <div className="modal-content">
+              <div className="form-group">
+                <label htmlFor="observations">Observaciones:</label>
+                <textarea
+                  id="observations"
+                  value={observations}
+                  onChange={(e) => setObservations(e.target.value)}
+                  placeholder="Ingrese las observaciones del entrenador"
+                  rows={4}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="routine">Rutina Activa:</label>
+                <select
+                  id="routine"
+                  value={activeRoutine}
+                  onChange={(e) => setActiveRoutine(e.target.value)}
+                >
+                  <option value="">Sin rutina asignada</option>
+                  {routines.map((routine) => (
+                    <option key={routine.id} value={routine.name}>
+                      {routine.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {updateMessage && (
+                <div className={`message ${updateMessage.type}`}>
+                  {updateMessage.text}
+                </div>
+              )}
+
+              <div className="modal-actions">
+                <button className="btn-cancel" onClick={handleCloseEditModal}>
+                  Cancelar
+                </button>
+                <button className="btn-save" onClick={handleSaveChanges}>
+                  Guardar Cambios
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
